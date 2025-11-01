@@ -1,60 +1,113 @@
-## Caesar Encrypt/Decrypt UI (Streamlit)
+## AES-256 CBC Encrypt/Decrypt UI (Streamlit)
 
-A simple yet polished Streamlit interface for Caesar cipher based on `encrypt-decrypt.py`.
+Aplikasi web berbasis Streamlit untuk enkripsi dan dekripsi menggunakan algoritma **AES-256** dalam mode **CBC (Cipher Block Chaining)**. Aplikasi ini menyediakan antarmuka yang ramah pengguna untuk mengenkripsi dan mendekripsi teks maupun file.
 
-### Features
-- Encrypt or decrypt text with adjustable shift (0-25)
-- Input via text area or file upload
-- Download processed result as `.txt`
-- Live letter frequency charts (input vs output)
+### Fitur
 
-### Requirements
-- Python >= 3.13
-- Dependencies are managed via `pyproject.toml`
+- ✅ Enkripsi dan dekripsi menggunakan AES-256 CBC
+- ✅ Input melalui text area atau upload file
+- ✅ Download hasil sebagai file `.txt`
+- ✅ Password-based encryption dengan PBKDF2 key derivation
+- ✅ Keamanan tinggi dengan salt dan IV acak
+- ✅ Antarmuka yang modern dan mudah digunakan
 
-### Install
+### Teknologi
 
-#### Using UV (Recommended)
-UV is a fast Python package installer. First, install UV:
+- **Algoritma**: AES-256 (Advanced Encryption Standard dengan kunci 256-bit)
+- **Mode Operasi**: CBC (Cipher Block Chaining)
+- **Key Derivation**: PBKDF2 dengan SHA256 (100,000 iterations)
+- **Format Output**: Base64 (berisi salt + IV + ciphertext)
+
+### Persyaratan
+
+- Python >= 3.10
+- Dependencies dikelola melalui `pyproject.toml`
+
+### Instalasi
+
+#### Menggunakan UV (Direkomendasikan)
+
+UV adalah package installer Python yang cepat. Pertama, install UV:
+
 ```bash
-# On Windows
+# Di Windows
 curl -LsSf https://astral.sh/uv/install.ps1 | powershell
-# Or via pip
+# Atau melalui pip
 pip install uv
 ```
 
-Then install dependencies:
+Kemudian install dependencies:
+
 ```bash
-# Install in current environment
+# Install di environment saat ini
 uv pip install -e .
-# Or create and use a virtual environment
+
+# Atau buat dan gunakan virtual environment
 uv venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+source .venv/bin/activate  # Di Windows: .venv\Scripts\activate
 uv pip install -e .
 ```
 
-#### Using pip
-```bash
-pip install -r requirements.txt  # if using requirements, or
-pip install .  # editable install if packaged, or
-pip install streamlit altair  # minimal
-```
+#### Menggunakan pip
 
-This repo uses `pyproject.toml` with `streamlit` specified, so you can also run:
 ```bash
+# Install dari pyproject.toml
 pip install -e .
+
+# Atau install manual
+pip install streamlit cryptography
 ```
 
-### Run
-From the project root:
+### Menjalankan Aplikasi
+
+Dari root project:
+
 ```bash
-streamlit run streamlit_app.py
+streamlit run app.py
 ```
 
-On Windows (PowerShell or Git Bash), the command is the same.
+Di Windows (PowerShell atau Git Bash), perintahnya sama.
 
-### Notes
-- The app dynamically loads functions from `encrypt-decrypt.py`. You can edit that file and refresh the app to apply changes.
-- Non-letter characters remain unchanged, and case is preserved.
+### Cara Penggunaan
 
+1. **Enkripsi**:
+   - Pilih mode "Encrypt"
+   - Masukkan plaintext (teks atau upload file)
+   - Masukkan password yang kuat
+   - Klik proses untuk mendapatkan ciphertext (Base64)
+   - Download dan simpan hasil dengan aman
 
+2. **Dekripsi**:
+   - Pilih mode "Decrypt"
+   - Masukkan ciphertext (Base64) yang sebelumnya dienkripsi
+   - Masukkan password yang sama dengan saat enkripsi
+   - Klik proses untuk mendapatkan plaintext
+   - Download hasil jika diperlukan
+
+### Catatan Keamanan
+
+- ⚠️ **Simpan password dengan aman**: Jika password hilang atau salah, data tidak dapat didekripsi
+- 🔒 **Gunakan password yang kuat**: Minimal 12 karakter dengan kombinasi huruf, angka, dan simbol
+- 🔐 **Simpan ciphertext dengan aman**: Ciphertext berisi semua informasi yang diperlukan untuk dekripsi (kecuali password)
+- 🔄 **Setiap enkripsi menghasilkan output berbeda**: Karena menggunakan IV acak, plaintext yang sama akan menghasilkan ciphertext yang berbeda
+
+### Detail Teknis
+
+- **Key Size**: 256-bit (32 bytes)
+- **Block Size**: 128-bit (16 bytes)
+- **Salt Size**: 128-bit (16 bytes)
+- **IV Size**: 128-bit (16 bytes)
+- **Key Derivation**: PBKDF2-HMAC-SHA256 dengan 100,000 iterations
+- **Padding**: PKCS7
+- **Output Encoding**: Base64
+
+### Struktur Output
+
+Output enkripsi adalah string Base64 dengan format:
+```
+Base64(Salt (16 bytes) + IV (16 bytes) + Ciphertext (variable length))
+```
+
+### Lisensi
+
+Proyek ini dibuat untuk keperluan pendidikan dan pembelajaran.

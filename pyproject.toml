@@ -1,10 +1,10 @@
 [project]
 name = "kemdat-encrypt-decrypt"
 version = "0.1.0"
-description = "Add your description here"
+description = "Aplikasi enkripsi dan dekripsi menggunakan AES-256 CBC mode"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.10"
 dependencies = [
     "streamlit>=1.50.0",
-    "altair>=5.4.0",
+    "cryptography>=41.0.0",
 ]

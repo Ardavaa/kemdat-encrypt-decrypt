@@ -1,22 +1,27 @@
+"""Aplikasi Streamlit untuk enkripsi dan dekripsi menggunakan AES-256 CBC.
+
+Aplikasi ini menyediakan antarmuka web yang ramah pengguna untuk mengenkripsi
+dan mendekripsi teks menggunakan algoritma AES-256 dalam mode CBC.
+"""
+
 from __future__ import annotations
 
 from io import BytesIO
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, Optional, Tuple
 
-import altair as alt
 import streamlit as st
 import importlib.util
 
 
-def _load_caesar_functions() -> Tuple[Callable[[str, int], str], Callable[[str, int], str]]:
-    """Dynamically load `caesar_encrypt` and `caesar_decrypt` from `encrypt-decrypt.py`.
+def _load_aes_functions() -> Tuple[Callable[[str, str], str], Callable[[str, str], str]]:
+    """Memuat fungsi `aes256_encrypt` dan `aes256_decrypt` dari `encrypt-decrypt.py`.
 
     Returns:
-        Tuple[Callable[[str, int], str], Callable[[str, int], str]]: encrypt and decrypt callables.
+        Tuple[Callable, Callable]: Fungsi encrypt dan decrypt yang dapat dipanggil.
 
     Raises:
-        RuntimeError: If the module or required functions cannot be loaded.
+        RuntimeError: Jika modul atau fungsi yang diperlukan tidak dapat dimuat.
     """
     project_dir = Path(__file__).resolve().parent
     target = project_dir / "encrypt-decrypt.py"
@@ -24,7 +29,7 @@ def _load_caesar_functions() -> Tuple[Callable[[str, int], str], Callable[[str, 
     if not target.exists():
         raise RuntimeError(f"Tidak menemukan file: {target}")
 
-    spec = importlib.util.spec_from_file_location("caesar_module", str(target))
+    spec = importlib.util.spec_from_file_location("aes_module", str(target))
     if spec is None or spec.loader is None:
         raise RuntimeError("Gagal memuat spesifikasi modul untuk encrypt-decrypt.py")
 
@@ -32,10 +37,12 @@ def _load_caesar_functions() -> Tuple[Callable[[str, int], str], Callable[[str, 
     spec.loader.exec_module(module)  # type: ignore[assignment]
 
     try:
-        encrypt = getattr(module, "caesar_encrypt")
-        decrypt = getattr(module, "caesar_decrypt")
+        encrypt = getattr(module, "aes256_encrypt")
+        decrypt = getattr(module, "aes256_decrypt")
     except AttributeError as exc:
-        raise RuntimeError("Fungsi caesar_encrypt/caesar_decrypt tidak ditemukan di encrypt-decrypt.py") from exc
+        raise RuntimeError(
+            "Fungsi aes256_encrypt/aes256_decrypt tidak ditemukan di encrypt-decrypt.py"
+        ) from exc
 
     if not callable(encrypt) or not callable(decrypt):
         raise RuntimeError("Objek yang dimuat bukan fungsi yang dapat dipanggil")
@@ -43,71 +50,28 @@ def _load_caesar_functions() -> Tuple[Callable[[str, int], str], Callable[[str, 
     return encrypt, decrypt
 
 
-def _compute_letter_frequency(text: str) -> Dict[str, int]:
-    """Compute frequency of A-Z letters ignoring case.
-
-    Args:
-        text: Input text.
-
-    Returns:
-        Mapping of uppercase letters A-Z to counts.
-    """
-    counts: Dict[str, int] = {chr(ord("A") + i): 0 for i in range(26)}
-    for ch in text:
-        if ch.isalpha():
-            counts[ch.upper()] += 1
-    return counts
-
-
-def _frequency_chart(freq: Dict[str, int], title: str) -> alt.Chart:
-    """Create an Altair bar chart for letter frequencies.
-
-    Args:
-        freq: Mapping letter -> count.
-        title: Chart title.
-
-    Returns:
-        Altair Chart object.
-    """
-    letters: List[str] = list(freq.keys())
-    values: List[int] = [freq[k] for k in letters]
-    data = {"Letter": letters, "Count": values}
-    chart = (
-        alt.Chart(alt.Data(values=[{"Letter": l, "Count": c} for l, c in zip(letters, values)]))
-        .mark_bar(cornerRadiusTopLeft=3, cornerRadiusTopRight=3)
-        .encode(
-            x=alt.X("Letter:N", sort=letters),
-            y=alt.Y("Count:Q"),
-            tooltip=["Letter:N", "Count:Q"],
-            color=alt.value("#4C78A8"),
-        )
-        .properties(title=title, width="container", height=220)
-    )
-    return chart
-
-
 def _prepare_download_bytes(text: str) -> BytesIO:
-    """Encode text to UTF-8 bytes for download.
+    """Encode text ke UTF-8 bytes untuk download.
 
     Args:
-        text: Text to encode.
+        text: Teks yang akan diencode.
 
     Returns:
-        BytesIO containing UTF-8 bytes.
+        BytesIO yang berisi UTF-8 bytes.
     """
     return BytesIO(text.encode("utf-8"))
 
 
 def run_app() -> None:
-    """Run the Streamlit Caesar cipher app."""
+    """Menjalankan aplikasi Streamlit AES-256."""
     st.set_page_config(
-        page_title="Caesar Encrypt/Decrypt",
+        page_title="AES-256 Encrypt/Decrypt",
         page_icon="🔐",
         layout="wide",
         menu_items={
             "Get help": "https://docs.streamlit.io/",
-            "Report a bug": "https://github.com/",
-            "About": "Caesar Cipher UI built with Streamlit.",
+            "Report a bug": "https://github.com/Ardavaa/kemdat-encrypt-decrypt",
+            "About": "AES-256 CBC Encryption/Decryption UI built with Streamlit.",
         },
     )
 
@@ -119,6 +83,7 @@ def run_app() -> None:
         .app-subtitle {opacity: 0.95;}
         .stDownloadButton > button {border-radius: 0.5rem;}
         .stTextArea textarea {font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+        .password-input {font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
         </style>
         """,
         unsafe_allow_html=True,
@@ -127,15 +92,15 @@ def run_app() -> None:
     st.markdown(
         """
         <div class="app-header">
-            <h2 style="margin-bottom: 0.25rem;">🔐 Caesar Cipher Studio</h2>
-            <div class="app-subtitle">Enkripsi dan dekripsi teks dengan antarmuka yang ramah dan interaktif.</div>
+            <h2 style="margin-bottom: 0.25rem;">🔐 AES-256 CBC Encryption Studio</h2>
+            <div class="app-subtitle">Enkripsi dan dekripsi teks menggunakan AES-256 dalam mode CBC dengan antarmuka yang ramah dan aman.</div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
     try:
-        caesar_encrypt, caesar_decrypt = _load_caesar_functions()
+        aes_encrypt, aes_decrypt = _load_aes_functions()
     except RuntimeError as err:
         st.error(str(err))
         st.stop()
@@ -143,12 +108,35 @@ def run_app() -> None:
     with st.sidebar:
         st.header("Pengaturan")
         mode: str = st.radio("Mode", options=["Encrypt", "Decrypt"], horizontal=True)
-        shift: int = st.slider("Shift", min_value=0, max_value=25, value=3, help="Jumlah pergeseran huruf (0-25)")
+        
+        # Password input
+        password: str = st.text_input(
+            "Password",
+            type="password",
+            help="Password untuk enkripsi/dekripsi. Gunakan password yang kuat untuk keamanan optimal.",
+            placeholder="Masukkan password...",
+        )
+        
+        # Show password strength indicator
+        if password:
+            strength = len(password)
+            if strength < 8:
+                st.warning("⚠️ Password terlalu pendek. Disarankan minimal 8 karakter.")
+            elif strength < 12:
+                st.info("ℹ️ Password cukup kuat, namun disarankan minimal 12 karakter untuk keamanan optimal.")
+            else:
+                st.success("✅ Password kuat!")
+        
         input_method: str = st.selectbox("Sumber Input", options=["Teks", "File"], index=0)
-        st.caption("Catatan: Non-huruf tidak berubah. Huruf besar/kecil dipertahankan.")
+        
+        st.markdown("---")
+        st.caption("**Catatan Keamanan:**")
+        st.caption("• Simpan password Anda dengan aman. Jika lupa password, data tidak dapat didekripsi.")
+        st.caption("• Setiap enkripsi menghasilkan output yang berbeda karena IV acak.")
+        st.caption("• Untuk keamanan maksimal, gunakan password yang panjang dan kompleks.")
 
     st.write("")
-    tabs = st.tabs(["Editor", "Analisis Frekuensi", "Tentang"])
+    tabs = st.tabs(["Editor", "Tentang"])
 
     with tabs[0]:
         if input_method == "Teks":
@@ -168,15 +156,41 @@ def run_app() -> None:
             )
 
             processed_text: str = ""
-            if input_text:
-                if mode == "Encrypt":
-                    processed_text = caesar_encrypt(input_text, shift)
-                else:
-                    processed_text = caesar_decrypt(input_text, shift)
+            error_message: Optional[str] = None
+
+            if input_text and password:
+                try:
+                    if mode == "Encrypt":
+                        processed_text = aes_encrypt(input_text, password)
+                    else:
+                        processed_text = aes_decrypt(input_text, password)
+                except ValueError as e:
+                    error_message = str(e)
+                except Exception as e:
+                    error_message = f"Terjadi kesalahan: {str(e)}"
+
+            if error_message:
+                st.error(error_message)
 
             st.markdown("---")
             st.subheader("Hasil")
-            st.text_area("Teks Keluaran", value=processed_text, height=180)
+            
+            # Display result differently for encrypted vs decrypted
+            if mode == "Encrypt" and processed_text:
+                st.caption("Ciphertext (Base64):")
+                st.text_area(
+                    "Teks Keluaran",
+                    value=processed_text,
+                    height=180,
+                    help="Hasil enkripsi dalam format Base64. Simpan dengan aman bersama password Anda.",
+                )
+            elif mode == "Decrypt":
+                st.text_area(
+                    "Teks Keluaran",
+                    value=processed_text,
+                    height=180,
+                    help="Plaintext yang didekripsi.",
+                )
 
             col1, col2, col3 = st.columns([1, 1, 2])
             with col1:
@@ -189,12 +203,16 @@ def run_app() -> None:
                 )
             with col2:
                 st.write(f"Karakter: {len(processed_text)}")
+                if mode == "Encrypt" and processed_text:
+                    st.write(f"Size: {len(processed_text.encode('utf-8'))} bytes")
 
             st.session_state["last_input_text"] = input_text
             st.session_state["last_output_text"] = processed_text
 
         else:  # File
-            uploaded = st.file_uploader("Unggah file teks (.txt, .md)", type=["txt", "md", "csv", "log"])
+            uploaded = st.file_uploader(
+                "Unggah file teks (.txt, .md)", type=["txt", "md", "csv", "log"]
+            )
             input_text = ""
             file_name: Optional[str] = None
             if uploaded is not None:
@@ -203,6 +221,7 @@ def run_app() -> None:
                     input_text = uploaded.read().decode("utf-8")
                 except UnicodeDecodeError:
                     try:
+                        uploaded.seek(0)  # Reset file pointer
                         input_text = uploaded.read().decode("latin-1")
                     except Exception as exc:  # noqa: BLE001
                         st.error(f"Gagal membaca file: {exc}")
@@ -210,18 +229,44 @@ def run_app() -> None:
 
             if input_text:
                 st.caption("Pratinjau (2000 karakter pertama)")
-                st.text_area("Isi File", value=input_text[:2000], height=180)
+                st.text_area("Isi File", value=input_text[:2000], height=180, disabled=True)
 
             processed_text = ""
-            if input_text:
-                if mode == "Encrypt":
-                    processed_text = caesar_encrypt(input_text, shift)
-                else:
-                    processed_text = caesar_decrypt(input_text, shift)
+            error_message: Optional[str] = None
+
+            if input_text and password:
+                try:
+                    if mode == "Encrypt":
+                        processed_text = aes_encrypt(input_text, password)
+                    else:
+                        processed_text = aes_decrypt(input_text, password)
+                except ValueError as e:
+                    error_message = str(e)
+                except Exception as e:
+                    error_message = f"Terjadi kesalahan: {str(e)}"
+
+            if error_message:
+                st.error(error_message)
 
             st.markdown("---")
             st.subheader("Hasil")
-            st.text_area("Teks Keluaran", value=processed_text[:2000], height=180)
+            
+            if mode == "Encrypt" and processed_text:
+                st.caption("Ciphertext (Base64) - Pertama 2000 karakter:")
+                st.text_area(
+                    "Teks Keluaran",
+                    value=processed_text[:2000] + ("..." if len(processed_text) > 2000 else ""),
+                    height=180,
+                    disabled=True,
+                )
+            else:
+                st.text_area(
+                    "Teks Keluaran",
+                    value=processed_text[:2000] + ("..." if len(processed_text) > 2000 else ""),
+                    height=180,
+                    disabled=True,
+                )
+            
             safe_base = (file_name or "hasil").rsplit(".", 1)[0]
             out_name = f"{safe_base}_{'encrypted' if mode == 'Encrypt' else 'decrypted'}.txt"
             st.download_button(
@@ -236,34 +281,48 @@ def run_app() -> None:
             st.session_state["last_output_text"] = processed_text
 
     with tabs[1]:
-        st.caption("Perbandingan frekuensi huruf sebelum dan sesudah pemrosesan.")
-        col_left, col_right = st.columns(2)
-        input_text = st.session_state.get("last_input_text", "")
-        output_text = st.session_state.get("last_output_text", "")
-        with col_left:
-            st.subheader("Input")
-            freq_in = _compute_letter_frequency(input_text)
-            st.altair_chart(_frequency_chart(freq_in, "Frekuensi Huruf (Input)"), use_container_width=True)
-        with col_right:
-            st.subheader("Output")
-            freq_out = _compute_letter_frequency(output_text)
-            st.altair_chart(_frequency_chart(freq_out, "Frekuensi Huruf (Output)"), use_container_width=True)
-
-    with tabs[2]:
         st.markdown(
             """
-            **Caesar cipher** menggeser setiap huruf sebesar `shift` pada alfabet.
-            - Huruf non-alfabet tidak berubah.
-            - Huruf besar/kecil dipertahankan seperti input.
-            - `shift` 0 berarti teks tidak berubah.
-            
-            UI ini memuat fungsi langsung dari `encrypt-decrypt.py`, sehingga Anda dapat memodifikasi
-            logika di file tersebut dan menyegarkan aplikasi untuk melihat perubahan.
+            ## Tentang AES-256 CBC Encryption
+
+            **AES (Advanced Encryption Standard)** adalah algoritma enkripsi simetris yang digunakan secara luas
+            untuk keamanan data. AES-256 menggunakan kunci 256-bit, yang merupakan ukuran kunci terbesar yang
+            didukung oleh AES dan memberikan tingkat keamanan yang sangat tinggi.
+
+            ### Mode CBC (Cipher Block Chaining)
+
+            CBC adalah mode operasi yang menggunakan Initialization Vector (IV) untuk memastikan bahwa
+            blok plaintext yang sama menghasilkan ciphertext yang berbeda. Setiap blok di-XOR dengan
+            ciphertext blok sebelumnya sebelum dienkripsi.
+
+            ### Fitur Keamanan
+
+            - **PBKDF2 Key Derivation**: Password diturunkan menjadi kunci menggunakan PBKDF2 dengan SHA256
+              dan 100,000 iterasi untuk meningkatkan keamanan terhadap brute-force attacks.
+            - **Random Salt**: Setiap enkripsi menggunakan salt acak yang unik.
+            - **Random IV**: Setiap enkripsi menggunakan IV acak yang berbeda, sehingga plaintext yang sama
+              menghasilkan ciphertext yang berbeda.
+            - **PKCS7 Padding**: Plaintext di-pad ke kelipatan 16 bytes (ukuran blok AES).
+
+            ### Format Output
+
+            Output enkripsi adalah string Base64 yang berisi:
+            1. Salt (16 bytes)
+            2. IV (16 bytes)
+            3. Ciphertext (variable length)
+
+            Semua komponen digabungkan dan di-encode ke Base64 untuk kemudahan penyimpanan dan transmisi.
+
+            ### Cara Penggunaan
+
+            1. **Enkripsi**: Masukkan plaintext dan password, klik "Encrypt", lalu simpan hasil ciphertext.
+            2. **Dekripsi**: Masukkan ciphertext (Base64) dan password yang sama, klik "Decrypt".
+
+            ⚠️ **Peringatan**: Simpan password Anda dengan aman. Jika password hilang atau salah,
+            data tidak dapat didekripsi!
             """
         )
 
 
 if __name__ == "__main__":
     run_app()
-
-
