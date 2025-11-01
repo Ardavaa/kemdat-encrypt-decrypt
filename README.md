@@ -2,6 +2,9 @@
 
 Aplikasi web berbasis Streamlit untuk enkripsi dan dekripsi menggunakan algoritma **AES-256** dalam mode **CBC (Cipher Block Chaining)**. Aplikasi ini menyediakan antarmuka yang ramah pengguna untuk mengenkripsi dan mendekripsi teks maupun file.
 
+🌐 **Aplikasi Online:** [https://aes-256-encrypt-decrypt.streamlit.app/](https://aes-256-encrypt-decrypt.streamlit.app/)  
+🎥 **Video Demo:** [https://youtu.be/n4YqjEzMDdE](https://youtu.be/n4YqjEzMDdE)
+
 ### Fitur
 
 - ✅ Enkripsi dan dekripsi menggunakan AES-256 CBC
@@ -60,13 +63,17 @@ pip install streamlit cryptography
 
 ### Menjalankan Aplikasi
 
-Dari root project:
+Aplikasi tersedia secara online di: [https://aes-256-encrypt-decrypt.streamlit.app/](https://aes-256-encrypt-decrypt.streamlit.app/)
+
+Atau jalankan secara lokal dari root project:
 
 ```bash
 streamlit run app.py
 ```
 
 Di Windows (PowerShell atau Git Bash), perintahnya sama.
+
+Video demo aplikasi dapat dilihat di: [https://youtu.be/n4YqjEzMDdE](https://youtu.be/n4YqjEzMDdE)
 
 ### Cara Penggunaan
 

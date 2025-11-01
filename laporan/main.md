@@ -6,6 +6,9 @@
 **Program Studi:** Sarjana Data Science  
 **Fakultas:** Informatika, Universitas Telkom Bandung
 
+**Link Aplikasi:** https://aes-256-encrypt-decrypt.streamlit.app/  
+**Video Demo:** https://youtu.be/n4YqjEzMDdE
+
 ---
 
 ## 1. Latar Belakang
@@ -522,10 +525,14 @@ Semua dependensi diinstal menggunakan pip atau uv sesuai dengan instruksi di REA
 
 ### Lampiran C: Cara Menjalankan
 
-Untuk menjalankan aplikasi:
+Untuk menjalankan aplikasi secara lokal:
 
 1. Install dependensi: `pip install -e .`
 2. Jalankan aplikasi: `streamlit run app.py`
 3. Buka browser di alamat yang ditampilkan (biasanya http://localhost:8501)
 
 Aplikasi akan berjalan di browser dan siap digunakan untuk enkripsi dan dekripsi.
+
+Aplikasi juga tersedia secara online di: https://aes-256-encrypt-decrypt.streamlit.app/
+
+Untuk melihat demo aplikasi, dapat menonton video di: https://youtu.be/n4YqjEzMDdE
